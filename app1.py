@@ -112,3 +112,38 @@ try:
     st.success(f"Predicted Turbulence Class: {prediction}")
 except Exception as e:
     st.error(f"Prediction error: {e}")
+
+# Flight Risk Summary
+st.subheader("📋 Flight Risk Summary")
+
+# Extract fields
+w = df["Weight"].iloc[0]
+a = df["Arm"].iloc[0]
+cog = df["COG"].iloc[0]
+alt = df["Altitude"].iloc[0]
+ws = df["WindSpeed"].iloc[0]
+turb = str(df["TurbulenceClass"].iloc[0])
+
+# Risk color + recommendation
+if turb == "Low":
+    risk_level = "🟢 LOW"
+    recommendation = "Safe to proceed."
+elif turb == "Medium":
+    risk_level = "🟡 MODERATE"
+    recommendation = "Proceed with caution and monitor conditions."
+else:
+    risk_level = "🔴 HIGH"
+    recommendation = "Delay flight or consider alternate routing."
+
+# Display
+st.markdown(f"""
+**Weight:** `{w} lbs`  
+**Arm Length:** `{a} in`  
+**COG:** `{cog:.2f}`  
+**Altitude:** `{alt} ft`  
+**Wind Speed:** `{ws:.1f} m/s`  
+**Turbulence:** `{turb}`
+
+### {risk_level}  
+**Recommendation:** {recommendation}
+""")
