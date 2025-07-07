@@ -46,16 +46,25 @@ st.dataframe(df)
 
 # Optional: Voice Alert
 def speak_turbulence_level(level):
-    try:
-        engine = pyttsx3.init()
-        engine.say(f"Current turbulence level is {level}")
-        engine.runAndWait()
-    except Exception as e:
-        st.warning(f"Speech engine error: {e}")
+    text = f"Current turbulence level is {level}"
+    tts = gTTS(text=text, lang='en')
+    with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+        tts.save(fp.name)
+        st.audio(fp.name, format="audio/mp3")
 
 if st.button("🔊 Speak Turbulence Level"):
     speak_turbulence_level(df["TurbulenceClass"].iloc[0])
+from gtts import gTTS
+import os
+from tempfile import NamedTemporaryFile
+import streamlit as st
 
+def speak_turbulence_level(level):
+    text = f"Current turbulence level is {level}"
+    tts = gTTS(text=text, lang='en')
+    with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+        tts.save(fp.name)
+        st.audio(fp.name, format="audio/mp3")
 # Weather API Fetch
 def fetch_live_weather(lat, lon, api_key):
     url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
