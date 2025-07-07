@@ -61,19 +61,8 @@ def speak_turbulence_level(level):
 
 # Speak turbulence class
 if st.button("🔊 Speak Turbulence Level"):
-    level = df["TurbulenceClass"].iloc[0]
+    level = str(df["TurbulenceClass"].iloc[0])  # Force plain string
     speak_turbulence_level(level)
-
-# TTS Test (for debugging)
-st.subheader("🔊 TTS Test")
-if st.button("▶️ Test Voice"):
-    try:
-        tts = gTTS(text="Test message from your turbulence dashboard.", lang='en')
-        with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-            tts.save(fp.name)
-            st.audio(fp.name, format="audio/mp3")
-    except Exception as e:
-        st.error(f"TTS test failed: {e}")
 
 # Fetch live wind data from OpenWeather
 def fetch_live_weather(lat, lon, api_key):
