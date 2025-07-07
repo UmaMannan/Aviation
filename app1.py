@@ -23,7 +23,7 @@ arm = st.sidebar.slider("Arm Length (inches)", 10, 60, 35)
 wind_speed = st.sidebar.slider("Wind Speed (m/s)", 0.0, 50.0, 15.0)
 altitude = st.sidebar.slider("Altitude (feet)", 0, 20000, 10000)
 
-# Data
+# Flight data snapshot
 now = datetime.datetime.now()
 df = pd.DataFrame([{
     "Time": now,
@@ -45,18 +45,37 @@ df["TurbulenceClass"] = df["TurbulenceScore"].apply(
 st.subheader("📋 Flight Snapshot")
 st.dataframe(df)
 
-# Speak using gTTS (Cloud-Compatible)
+# Browser-based TTS (Streamlit Cloud compatible)
 def speak_turbulence_level(level):
-    text = f"Current turbulence level is {level}"
-    tts = gTTS(text=text, lang='en')
-    with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-        tts.save(fp.name)
-        st.audio(fp.name, format="audio/mp3")
+    try:
+        level_str = str(level).strip().capitalize()
+        if level_str not in ["Low", "Medium", "High"]:
+            raise ValueError(f"Unexpected turbulence level: {level_str}")
+        text = f"Current turbulence level is {level_str}."
+        tts = gTTS(text=text, lang='en')
+        with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+            tts.save(fp.name)
+            st.audio(fp.name, format="audio/mp3")
+    except Exception as e:
+        st.error(f"Speech synthesis failed: {e}")
 
+# Speak turbulence class
 if st.button("🔊 Speak Turbulence Level"):
-    speak_turbulence_level(df["TurbulenceClass"].iloc[0])
+    level = df["TurbulenceClass"].iloc[0]
+    speak_turbulence_level(level)
 
-# Fetch Live Weather
+# TTS Test (for debugging)
+st.subheader("🔊 TTS Test")
+if st.button("▶️ Test Voice"):
+    try:
+        tts = gTTS(text="Test message from your turbulence dashboard.", lang='en')
+        with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+            tts.save(fp.name)
+            st.audio(fp.name, format="audio/mp3")
+    except Exception as e:
+        st.error(f"TTS test failed: {e}")
+
+# Fetch live wind data from OpenWeather
 def fetch_live_weather(lat, lon, api_key):
     url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
     try:
@@ -73,7 +92,7 @@ def fetch_live_weather(lat, lon, api_key):
 # Live Wind Option
 st.subheader("🌐 Live Wind Option")
 if st.checkbox("Use Live Wind Speed"):
-    api_key = "e9e42833dd2e06259a55b7ea59429ab1"  # Replace with st.secrets if desired
+    api_key = "e9e42833dd2e06259a55b7ea59429ab1"  # Replace with st.secrets["weather_api_key"] if preferred
     live_wind, score = fetch_live_weather(latitude, longitude, api_key)
     if live_wind is not None:
         st.metric("Live Wind Speed (m/s)", f"{live_wind:.2f}")
@@ -84,13 +103,13 @@ if st.checkbox("Use Live Wind Speed"):
             lambda x: "Low" if x < 0.3 else "Medium" if x < 0.7 else "High"
         )
 
-# Map
+# Location map
 st.subheader("🗺️ Location Map")
 m = folium.Map(location=[latitude, longitude], zoom_start=6)
 HeatMap([[latitude, longitude, df["TurbulenceScore"].iloc[0]]]).add_to(m)
 st_folium(m, width=700)
 
-# Plot
+# Plot chart
 st.subheader("📈 Center of Gravity and Altitude")
 fig = px.line(df, x="Time", y=["COG", "Altitude"], title="COG and Altitude")
 st.plotly_chart(fig)
