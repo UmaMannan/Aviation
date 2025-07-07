@@ -6,26 +6,41 @@ import requests
 import folium
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
+import plotly.graph_objects as go
 import plotly.express as px
 import joblib
 from gtts import gTTS
 from tempfile import NamedTemporaryFile
 
+# ----- Custom Dark Theme -----
 st.set_page_config(page_title="Flight Turbulence Dashboard", layout="wide")
 st.markdown("""
-<style>
-    .main {
-        background-color: #0c0c0c;
-        color: #ffffff;
-    }
-</style>
+    <style>
+        .reportview-container {
+            background: #101820;
+            color: #F2F3F4;
+        }
+        .sidebar .sidebar-content {
+            background: #17181c;
+        }
+        h1, h2, h3, h4, h5 {
+            color: #FFD700;
+        }
+        .stButton > button {
+            background-color: #444654;
+            color: #FFD700;
+        }
+        .st-cm, .st-bf {
+            color: #FFD700;
+        }
+    </style>
 """, unsafe_allow_html=True)
 
 st.title("✈️ Flight Turbulence Safety Dashboard")
 st.markdown("---")
 
-# Sidebar Inputs
-st.sidebar.header("🧮 Input Parameters")
+# ----- Sidebar: Aircraft Inputs -----
+st.sidebar.header("🧮 Aircraft Input")
 latitude = st.sidebar.number_input("Latitude", value=37.77, format="%.6f")
 longitude = st.sidebar.number_input("Longitude", value=-122.42, format="%.6f")
 weight = st.sidebar.slider("Aircraft Weight (lbs)", 1000, 10000, 5000)
@@ -33,7 +48,6 @@ arm = st.sidebar.slider("Arm Length (inches)", 10, 60, 35)
 wind_speed = st.sidebar.slider("Wind Speed (m/s)", 0.0, 50.0, 15.0)
 altitude = st.sidebar.slider("Altitude (feet)", 0, 20000, 10000)
 
-# Data prep
 now = datetime.datetime.now()
 df = pd.DataFrame([{
     "Time": now,
@@ -52,15 +66,71 @@ df["TurbulenceClass"] = df["TurbulenceScore"].apply(
     lambda x: "Low" if x < 0.3 else "Medium" if x < 0.7 else "High"
 )
 
-# Risk level color
-color = {"Low": "🟢", "Medium": "🟡", "High": "🔴"}
+# ----- Visual Cockpit Panel (COG & Altitude Dials) -----
+st.markdown("## 🛩️ Cockpit Panel: Dials & Instruments")
+col1, col2, col3 = st.columns([2,2,2])
 
-# Speak Function
+with col1:
+    fig_cog = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=df["COG"].iloc[0],
+        title={'text': "COG (in)", 'font': {'color': '#FFD700'}},
+        gauge={
+            'axis': {'range': [10, 60], 'tickcolor':'#FFD700'},
+            'bar': {'color': "#FFD700"},
+            'bgcolor': "#23272f",
+            'borderwidth': 2,
+            'bordercolor': "#444654"
+        },
+        number={'suffix': " in", 'font': {'color': '#FFD700'}}
+    ))
+    fig_cog.update_layout(paper_bgcolor="#101820", font={'color':'#FFD700'})
+    st.plotly_chart(fig_cog, use_container_width=True)
+
+with col2:
+    fig_alt = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=df["Altitude"].iloc[0],
+        title={'text': "Altitude (ft)", 'font': {'color': '#FFD700'}},
+        gauge={
+            'axis': {'range': [0, 20000], 'tickcolor':'#FFD700'},
+            'bar': {'color': "#FFD700"},
+            'bgcolor': "#23272f",
+            'borderwidth': 2,
+            'bordercolor': "#444654"
+        },
+        number={'suffix': " ft", 'font': {'color': '#FFD700'}}
+    ))
+    fig_alt.update_layout(paper_bgcolor="#101820", font={'color':'#FFD700'})
+    st.plotly_chart(fig_alt, use_container_width=True)
+
+with col3:
+    fig_wind = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=df["WindSpeed"].iloc[0],
+        title={'text': "Wind Speed (m/s)", 'font': {'color': '#FFD700'}},
+        gauge={
+            'axis': {'range': [0, 50], 'tickcolor':'#FFD700'},
+            'bar': {'color': "#FFD700"},
+            'bgcolor': "#23272f",
+            'borderwidth': 2,
+            'bordercolor': "#444654"
+        },
+        number={'suffix': " m/s", 'font': {'color': '#FFD700'}}
+    ))
+    fig_wind.update_layout(paper_bgcolor="#101820", font={'color':'#FFD700'})
+    st.plotly_chart(fig_wind, use_container_width=True)
+
+# ----- Snapshot Table -----
+st.markdown("## 📋 Flight Snapshot")
+st.dataframe(df, use_container_width=True)
+
+# ----- Voice Output (gTTS) -----
 def speak_turbulence_level(level):
     try:
         level_str = str(level).strip().capitalize()
-        if level_str not in color:
-            raise ValueError("Invalid level")
+        if level_str not in ["Low", "Medium", "High"]:
+            raise ValueError(f"Unexpected turbulence level: {level_str}")
         text = f"Current turbulence level is {level_str}."
         tts = gTTS(text=text, lang='en')
         with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
@@ -69,16 +139,11 @@ def speak_turbulence_level(level):
     except Exception as e:
         st.error(f"Speech synthesis failed: {e}")
 
-# Display snapshot
-st.markdown("## 🛫 Flight Snapshot")
-st.dataframe(df, use_container_width=True)
-
-# Speak button
 if st.button("🔊 Speak Turbulence Level"):
     level = str(df["TurbulenceClass"].iloc[0])
     speak_turbulence_level(level)
 
-# Live Weather
+# ----- Live Weather -----
 st.markdown("## 🌐 Live Wind Option")
 def fetch_live_weather(lat, lon, api_key):
     url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
@@ -104,10 +169,11 @@ if st.checkbox("Use Live Wind Speed"):
             lambda x: "Low" if x < 0.3 else "Medium" if x < 0.7 else "High"
         )
 
-# Risk Summary
+# ----- Risk Summary -----
 st.markdown("## 📋 Flight Risk Summary")
 w, a, cog, alt, ws = df.iloc[0][["Weight", "Arm", "COG", "Altitude", "WindSpeed"]]
 turb = str(df["TurbulenceClass"].iloc[0])
+color = {"Low": "🟢", "Medium": "🟡", "High": "🔴"}
 
 if turb == "Low":
     risk = "🟢 LOW"
@@ -120,30 +186,31 @@ else:
     note = "Delay or reroute suggested."
 
 st.markdown(f"""
-**Weight:** `{w} lbs`  
-**Arm:** `{a} in`  
-**COG:** `{cog:.2f}`  
-**Altitude:** `{alt} ft`  
-**Wind Speed:** `{ws:.1f} m/s`  
-**Turbulence Level:** `{turb}`
+<div style="background-color:#23272f;padding:20px;border-radius:15px;">
+<b>Weight:</b> <span style="color:#FFD700;">{w} lbs</span><br>
+<b>Arm:</b> <span style="color:#FFD700;">{a} in</span><br>
+<b>COG:</b> <span style="color:#FFD700;">{cog:.2f}</span><br>
+<b>Altitude:</b> <span style="color:#FFD700;">{alt} ft</span><br>
+<b>Wind Speed:</b> <span style="color:#FFD700;">{ws:.1f} m/s</span><br>
+<b>Turbulence Level:</b> <span style="color:#FFD700;">{turb} {color[turb]}</span><br>
+<h3 style="color:#FFD700;">{risk}</h3>
+<b>Recommendation:</b> <span style="color:#FFD700;">{note}</span>
+</div>
+""", unsafe_allow_html=True)
 
-### {risk}  
-**Recommendation:** {note}
-""")
-
-# Map
+# ----- Map -----
 st.markdown("## 🗺️ Location Map")
-m = folium.Map(location=[latitude, longitude], zoom_start=6)
+m = folium.Map(location=[latitude, longitude], zoom_start=6, tiles="CartoDB dark_matter")
 HeatMap([[latitude, longitude, df["TurbulenceScore"].iloc[0]]]).add_to(m)
 st_folium(m, width=700)
 
-# Chart
+# ----- Line Chart -----
 st.markdown("## 📈 Center of Gravity and Altitude")
 fig = px.line(df, x="Time", y=["COG", "Altitude"], title="COG and Altitude")
-fig.update_layout(template='plotly_dark')
+fig.update_layout(template='plotly_dark', font=dict(color='#FFD700'))
 st.plotly_chart(fig, use_container_width=True)
 
-# Prediction
+# ----- Prediction -----
 st.markdown("## 🔮 Turbulence Prediction")
 try:
     model = joblib.load("model_turbulence.pkl")
