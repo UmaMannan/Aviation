@@ -4,59 +4,55 @@ import numpy as np
 import datetime
 import requests
 import folium
-from folium.plugins import HeatMap
+from folium.plugins import HeatMap, AntPath
 from streamlit_folium import st_folium
 import plotly.graph_objects as go
 import plotly.express as px
 import joblib
 from gtts import gTTS
 from tempfile import NamedTemporaryFile
+from sklearn.ensemble import IsolationForest
 
-# ----- Custom Dark Theme -----
-st.set_page_config(page_title="Flight Turbulence Dashboard", layout="wide")
-st.markdown("""
-    <style>
-        .reportview-container {
-            background: #101820;
-            color: #F2F3F4;
-        }
-        .sidebar .sidebar-content {
-            background: #17181c;
-        }
-        h1, h2, h3, h4, h5 {
-            color: #FFD700;
-        }
-        .stButton > button {
-            background-color: #444654;
-            color: #FFD700;
-        }
-        .st-cm, .st-bf {
-            color: #FFD700;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# Prophet for trend forecasting
+from prophet import Prophet
 
-st.title("✈️ Flight Turbulence Safety Dashboard")
-st.markdown("---")
+# --- API Key from secrets ---
+api_key = "e9e42833dd2e06259a55b7ea59429ab1"
 
-# ----- Sidebar: Aircraft Inputs -----
-st.sidebar.header("🧮 Aircraft Input")
+# --- Sidebar: Inputs ---
+st.sidebar.header("🧮 Aircraft Parameters")
 latitude = st.sidebar.number_input("Latitude", value=37.77, format="%.6f")
 longitude = st.sidebar.number_input("Longitude", value=-122.42, format="%.6f")
 weight = st.sidebar.slider("Aircraft Weight (lbs)", 1000, 10000, 5000)
 arm = st.sidebar.slider("Arm Length (inches)", 10, 60, 35)
+
+st.sidebar.header("🌦️ Environmental Conditions")
 wind_speed = st.sidebar.slider("Wind Speed (m/s)", 0.0, 50.0, 15.0)
 altitude = st.sidebar.slider("Altitude (feet)", 0, 20000, 10000)
+use_live_wind = st.sidebar.checkbox("Use Live Wind Speed")
 
+# --- Fetch live wind speed if selected ---
+@st.cache_data(ttl=600)
+def fetch_live_weather(lat, lon, api_key):
+    url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
+    try:
+        r = requests.get(url)
+        r.raise_for_status()
+        return r.json()["wind"]["speed"]
+    except:
+        return None
+
+if use_live_wind:
+    live_ws = fetch_live_weather(latitude, longitude, api_key)
+    if live_ws:
+        wind_speed = live_ws
+        st.sidebar.success(f"Live Wind Speed: {wind_speed:.2f} m/s")
+
+# --- Data Preparation ---
 now = datetime.datetime.now()
 df = pd.DataFrame([{
-    "Time": now,
-    "Latitude": latitude,
-    "Longitude": longitude,
-    "Weight": weight,
-    "Arm": arm,
-    "WindSpeed": wind_speed,
-    "Altitude": altitude
+    "Time": now, "Latitude": latitude, "Longitude": longitude,
+    "Weight": weight, "Arm": arm, "WindSpeed": wind_speed, "Altitude": altitude
 }])
 
 df["Moment"] = df["Weight"] * df["Arm"]
@@ -66,151 +62,139 @@ df["TurbulenceClass"] = df["TurbulenceScore"].apply(
     lambda x: "Low" if x < 0.3 else "Medium" if x < 0.7 else "High"
 )
 
-# ----- Visual Cockpit Panel (COG & Altitude Dials) -----
-st.markdown("## 🛩️ Cockpit Panel: Dials & Instruments")
-col1, col2, col3 = st.columns([2,2,2])
+# --- Store and Update Historical Data ---
+if "historical_data" not in st.session_state:
+    st.session_state["historical_data"] = df.copy()
+else:
+    st.session_state["historical_data"] = pd.concat(
+        [st.session_state["historical_data"], df], ignore_index=True
+    ).drop_duplicates(subset=["Time"], keep="last")
 
+historical_data = st.session_state["historical_data"]
+
+# --- Dashboard Layout ---
+st.set_page_config(page_title="Flight Turbulence Dashboard", layout="wide")
+st.title("✈️ Flight Turbulence Safety Dashboard")
+st.markdown("---")
+
+# --- Cockpit Panel ---
+st.markdown("## 🛩️ Cockpit Panel: Dials & Instruments")
+col1, col2, col3 = st.columns(3)
 with col1:
     fig_cog = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=df["COG"].iloc[0],
-        title={'text': "COG (in)", 'font': {'color': '#FFD700'}},
-        gauge={
-            'axis': {'range': [10, 60], 'tickcolor':'#FFD700'},
-            'bar': {'color': "#FFD700"},
-            'bgcolor': "#23272f",
-            'borderwidth': 2,
-            'bordercolor': "#444654"
-        },
-        number={'suffix': " in", 'font': {'color': '#FFD700'}}
+        mode="gauge+number", value=df["COG"].iloc[0],
+        title={'text': "COG (in)"},
+        gauge={'axis': {'range': [10, 60]}}
     ))
-    fig_cog.update_layout(paper_bgcolor="#101820", font={'color':'#FFD700'})
     st.plotly_chart(fig_cog, use_container_width=True)
-
 with col2:
     fig_alt = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=df["Altitude"].iloc[0],
-        title={'text': "Altitude (ft)", 'font': {'color': '#FFD700'}},
-        gauge={
-            'axis': {'range': [0, 20000], 'tickcolor':'#FFD700'},
-            'bar': {'color': "#FFD700"},
-            'bgcolor': "#23272f",
-            'borderwidth': 2,
-            'bordercolor': "#444654"
-        },
-        number={'suffix': " ft", 'font': {'color': '#FFD700'}}
+        mode="gauge+number", value=df["Altitude"].iloc[0],
+        title={'text': "Altitude (ft)"},
+        gauge={'axis': {'range': [0, 20000]}}
     ))
-    fig_alt.update_layout(paper_bgcolor="#101820", font={'color':'#FFD700'})
     st.plotly_chart(fig_alt, use_container_width=True)
-
 with col3:
     fig_wind = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=df["WindSpeed"].iloc[0],
-        title={'text': "Wind Speed (m/s)", 'font': {'color': '#FFD700'}},
-        gauge={
-            'axis': {'range': [0, 50], 'tickcolor':'#FFD700'},
-            'bar': {'color': "#FFD700"},
-            'bgcolor': "#23272f",
-            'borderwidth': 2,
-            'bordercolor': "#444654"
-        },
-        number={'suffix': " m/s", 'font': {'color': '#FFD700'}}
+        mode="gauge+number", value=df["WindSpeed"].iloc[0],
+        title={'text': "Wind Speed (m/s)"},
+        gauge={'axis': {'range': [0, 50]}}
     ))
-    fig_wind.update_layout(paper_bgcolor="#101820", font={'color':'#FFD700'})
     st.plotly_chart(fig_wind, use_container_width=True)
 
-# ----- Snapshot Table -----
+# --- Flight Snapshot Table ---
 st.markdown("## 📋 Flight Snapshot")
 st.dataframe(df, use_container_width=True)
 
-# ----- Voice Output (gTTS) -----
+# --- Voice Output (gTTS) ---
 def speak_turbulence_level(level):
-    try:
-        level_str = str(level).strip().capitalize()
-        if level_str not in ["Low", "Medium", "High"]:
-            raise ValueError(f"Unexpected turbulence level: {level_str}")
-        text = f"Current turbulence level is {level_str}."
-        tts = gTTS(text=text, lang='en')
-        with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-            tts.save(fp.name)
-            st.audio(fp.name, format="audio/mp3")
-    except Exception as e:
-        st.error(f"Speech synthesis failed: {e}")
-
+    text = f"Current turbulence level is {level}."
+    tts = gTTS(text=text, lang='en')
+    with NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+        tts.save(fp.name)
+        st.audio(fp.name, format="audio/mp3")
 if st.button("🔊 Speak Turbulence Level"):
-    level = str(df["TurbulenceClass"].iloc[0])
-    speak_turbulence_level(level)
+    speak_turbulence_level(df["TurbulenceClass"].iloc[0])
 
-# ----- Live Weather -----
-st.markdown("## 🌐 Live Wind Option")
-def fetch_live_weather(lat, lon, api_key):
-    url = f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
-    try:
-        r = requests.get(url)
-        r.raise_for_status()
-        data = r.json()
-        wind_speed = data["wind"]["speed"]
-        score = min(wind_speed / 45.0, 1.0)
-        return wind_speed, score
-    except:
-        return None, None
-
-if st.checkbox("Use Live Wind Speed"):
-    api_key = "e9e42833dd2e06259a55b7ea59429ab1"
-    live_ws, score = fetch_live_weather(latitude, longitude, api_key)
-    if live_ws:
-        st.metric("Live Wind Speed (m/s)", f"{live_ws:.2f}")
-        st.metric("Turbulence Score", f"{score:.2f}")
-        df["WindSpeed"] = live_ws
-        df["TurbulenceScore"] = score
-        df["TurbulenceClass"] = df["TurbulenceScore"].apply(
-            lambda x: "Low" if x < 0.3 else "Medium" if x < 0.7 else "High"
-        )
-
-# ----- Risk Summary -----
+# --- Risk Summary ---
 st.markdown("## 📋 Flight Risk Summary")
-w, a, cog, alt, ws = df.iloc[0][["Weight", "Arm", "COG", "Altitude", "WindSpeed"]]
-turb = str(df["TurbulenceClass"].iloc[0])
-color = {"Low": "🟢", "Medium": "🟡", "High": "🔴"}
+turb = df["TurbulenceClass"].iloc[0]
+color = {"Low": "🟢", "Medium": "🟡", "High": "🔴"}[turb]
+note = {"Low": "Safe to proceed.", "Medium": "Proceed with caution.", "High": "Delay or reroute suggested."}[turb]
+st.info(f"**Turbulence Level:** {turb} {color} | **Recommendation:** {note}")
 
-if turb == "Low":
-    risk = "🟢 LOW"
-    note = "Safe to proceed."
-elif turb == "Medium":
-    risk = "🟡 MODERATE"
-    note = "Proceed with caution."
-else:
-    risk = "🔴 HIGH"
-    note = "Delay or reroute suggested."
-
-st.markdown(f"""
-<div style="background-color:#23272f;padding:20px;border-radius:15px;">
-<b>Weight:</b> <span style="color:#FFD700;">{w} lbs</span><br>
-<b>Arm:</b> <span style="color:#FFD700;">{a} in</span><br>
-<b>COG:</b> <span style="color:#FFD700;">{cog:.2f}</span><br>
-<b>Altitude:</b> <span style="color:#FFD700;">{alt} ft</span><br>
-<b>Wind Speed:</b> <span style="color:#FFD700;">{ws:.1f} m/s</span><br>
-<b>Turbulence Level:</b> <span style="color:#FFD700;">{turb} {color[turb]}</span><br>
-<h3 style="color:#FFD700;">{risk}</h3>
-<b>Recommendation:</b> <span style="color:#FFD700;">{note}</span>
-</div>
-""", unsafe_allow_html=True)
-
-# ----- Map -----
+# --- Location Map & Heatmap ---
 st.markdown("## 🗺️ Location Map")
-m = folium.Map(location=[latitude, longitude], zoom_start=6, tiles="CartoDB dark_matter")
+m = folium.Map(location=[latitude, longitude], zoom_start=6)
 HeatMap([[latitude, longitude, df["TurbulenceScore"].iloc[0]]]).add_to(m)
+folium.Marker([latitude, longitude], tooltip="Current Location").add_to(m)
 st_folium(m, width=700)
 
-# ----- Line Chart -----
-st.markdown("## 📈 Center of Gravity and Altitude")
-fig = px.line(df, x="Time", y=["COG", "Altitude"], title="COG and Altitude")
-fig.update_layout(template='plotly_dark', font=dict(color='#FFD700'))
-st.plotly_chart(fig, use_container_width=True)
+# --- Historical Trends Chart ---
+st.markdown("## 📈 Historical Trends")
+fig_hist = px.line(historical_data, x="Time", y=["COG", "Altitude", "WindSpeed"], markers=True)
+st.plotly_chart(fig_hist, use_container_width=True)
 
-# ----- Prediction -----
+# --- Anomaly Detection (Isolation Forest) ---
+st.markdown("## 🚨 Anomaly Detection")
+if len(historical_data) >= 10:  # Minimum 10 samples for IF
+    clf = IsolationForest(contamination=0.1, random_state=42)
+    feat_cols = ["WindSpeed", "COG", "Altitude"]
+    X = historical_data[feat_cols]
+    anomaly_pred = clf.fit_predict(X)
+    historical_data["Anomaly"] = anomaly_pred
+    anomalies = historical_data[historical_data["Anomaly"] == -1]
+    if not anomalies.empty:
+        st.warning("⚠️ Anomaly detected in flight conditions!")
+        st.dataframe(anomalies)
+else:
+    st.info("Add more historical points to enable anomaly detection (minimum 10).")
+
+# --- Route Optimization & Visualization ---
+st.markdown("## 🌍 Route Visualization")
+with st.expander("Show Route Input"):
+    origin_lat = st.number_input("Origin Latitude", value=37.77)
+    origin_lon = st.number_input("Origin Longitude", value=-122.42)
+    dest_lat = st.number_input("Destination Latitude", value=34.05)
+    dest_lon = st.number_input("Destination Longitude", value=-118.25)
+
+def generate_route(lat1, lon1, lat2, lon2, points=10):
+    lats = np.linspace(lat1, lat2, points)
+    lons = np.linspace(lon1, lon2, points)
+    return list(zip(lats, lons))
+
+route_coords = generate_route(origin_lat, origin_lon, dest_lat, dest_lon)
+
+route_map = folium.Map(location=[(origin_lat+dest_lat)/2, (origin_lon+dest_lon)/2], zoom_start=6)
+AntPath(route_coords, color="blue").add_to(route_map)
+folium.Marker([origin_lat, origin_lon], tooltip="Origin", icon=folium.Icon(color='green')).add_to(route_map)
+folium.Marker([dest_lat, dest_lon], tooltip="Destination", icon=folium.Icon(color='red')).add_to(route_map)
+st_folium(route_map, width=700)
+
+# --- Trend Forecasting (Prophet) ---
+st.markdown("## 📉 Wind Speed Trend Forecasting")
+try:
+    if len(historical_data) > 12:
+        # Prophet expects 'ds' and 'y' columns
+        forecast_data = historical_data[["Time", "WindSpeed"]].rename(columns={"Time": "ds", "WindSpeed": "y"})
+        model = Prophet()
+        model.fit(forecast_data)
+        future = model.make_future_dataframe(periods=24, freq='H')
+        forecast = model.predict(future)
+        fig_forecast = px.line(forecast, x='ds', y='yhat', title="Wind Speed Forecast")
+        fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Conf.')
+        fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Conf.')
+        st.plotly_chart(fig_forecast, use_container_width=True)
+    else:
+        st.info("Add at least 12 points for wind speed forecasting.")
+except Exception as e:
+    st.error(f"Forecasting error: {e}")
+
+# --- Data Export ---
+csv = historical_data.to_csv(index=False)
+st.download_button("Export Data", csv, "flight_data.csv")
+
+# --- Turbulence Prediction (ML Model) ---
 st.markdown("## 🔮 Turbulence Prediction")
 try:
     model = joblib.load("model_turbulence.pkl")
