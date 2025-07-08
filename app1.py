@@ -16,47 +16,13 @@ from prophet import Prophet
 from fpdf import FPDF
 import base64
 
-# -------------- THEME: UMA Colors --------------
-st.set_page_config(
-    page_title="UMA Aviation Club Dashboard",
-    page_icon="✈️",
-    layout="wide"
-)
-st.markdown("""
-    <style>
-        .reportview-container, .stApp {
-            background: #23272f !important;
-            color: #b8c6db !important;
-        }
-        .sidebar .sidebar-content {
-            background: #16191d !important;
-        }
-        h1, h2, h3, h4, h5, .stTabs [data-baseweb="tab"] {
-            color: #5e7fa5 !important;
-        }
-        .stButton > button, .stDownloadButton > button {
-            background-color: #2e4159 !important;
-            color: #b8c6db !important;
-        }
-        .stDataFrame, .stTable {
-            background-color: #23272f !important;
-            color: #b8c6db !important;
-        }
-        .stAlert {
-            background-color: #19212b !important;
-            color: #c4d7ea !important;
-        }
-        .st-info {
-            background-color: #223449 !important;
-            color: #b8c6db !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# --- App configuration ---
+st.set_page_config(page_title="Flight Turbulence Safety Dashboard", layout="wide", page_icon="✈️")
 
-# ----------- UMA AVIATION CLUB LOGO -----------
+# --- Sidebar Branding & Help ---
 with st.sidebar:
-    st.image("ChatGPT Image Jul 8, 2025, 02_20_23 PM.png", width=220)
-    st.markdown("### UMA Aviation Club Dashboard")
+    st.image("https://cdn-icons-png.flaticon.com/512/2917/2917991.png", width=80)
+    st.markdown("### Flight Turbulence Dashboard")
     st.info(
         "🛩️ Enter your aircraft and weather data, analyze risk, "
         "forecast turbulence, and download safety reports."
@@ -69,10 +35,10 @@ with st.sidebar:
     st.markdown("#### Data Management")
     uploaded = st.file_uploader("Upload Previous Session", type="csv", help="Restore a saved flight session.")
 
-# ------------ API KEY (as per your request) -------------
+# --- API Key ---
 api_key = "e9e42833dd2e06259a55b7ea59429ab1"
 
-# -------------- Inputs --------------
+# --- Inputs ---
 st.sidebar.header("🧮 Aircraft Parameters")
 latitude = st.sidebar.number_input("Latitude", value=37.77, format="%.6f")
 longitude = st.sidebar.number_input("Longitude", value=-122.42, format="%.6f")
@@ -178,7 +144,7 @@ with tab1:
     st.info(f"**Turbulence Level:** {turb} {color} | **Recommendation:** {note}")
 
     st.markdown("## 🗺️ Location Map")
-    m = folium.Map(location=[latitude, longitude], zoom_start=6, tiles="CartoDB dark_matter")
+    m = folium.Map(location=[latitude, longitude], zoom_start=6)
     HeatMap([[latitude, longitude, df["TurbulenceScore"].iloc[0]]]).add_to(m)
     folium.Marker([latitude, longitude], tooltip="Current Location").add_to(m)
     st_folium(m, width=700)
@@ -195,7 +161,7 @@ with tab1:
         lons = np.linspace(lon1, lon2, points)
         return list(zip(lats, lons))
     route_coords = generate_route(origin_lat, origin_lon, dest_lat, dest_lon)
-    route_map = folium.Map(location=[(origin_lat+dest_lat)/2, (origin_lon+dest_lon)/2], zoom_start=6, tiles="CartoDB dark_matter")
+    route_map = folium.Map(location=[(origin_lat+dest_lat)/2, (origin_lon+dest_lon)/2], zoom_start=6)
     AntPath(route_coords, color="blue").add_to(route_map)
     folium.Marker([origin_lat, origin_lon], tooltip="Origin", icon=folium.Icon(color='green')).add_to(route_map)
     folium.Marker([dest_lat, dest_lon], tooltip="Destination", icon=folium.Icon(color='red')).add_to(route_map)
@@ -214,8 +180,7 @@ with tab1:
 # --- Tab 2: Trends & Forecast ---
 with tab2:
     st.markdown("## 📈 Historical Trends")
-    fig_hist = px.line(historical_data, x="Time", y=["COG", "Altitude", "WindSpeed"], markers=True,
-                       color_discrete_map={"COG": "#5e7fa5", "Altitude": "#b8c6db", "WindSpeed": "#2e4159"})
+    fig_hist = px.line(historical_data, x="Time", y=["COG", "Altitude", "WindSpeed"], markers=True)
     st.plotly_chart(fig_hist, use_container_width=True)
 
     st.markdown("## 🚨 Anomaly Detection")
@@ -240,9 +205,9 @@ with tab2:
             model.fit(forecast_data)
             future = model.make_future_dataframe(periods=24, freq='H')
             forecast = model.predict(future)
-            fig_forecast = px.line(forecast, x='ds', y='yhat', title="Wind Speed Forecast", color_discrete_sequence=["#5e7fa5"])
-            fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Conf.', line=dict(color="#b8c6db"))
-            fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Conf.', line=dict(color="#2e4159"))
+            fig_forecast = px.line(forecast, x='ds', y='yhat', title="Wind Speed Forecast")
+            fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Conf.')
+            fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Conf.')
             st.plotly_chart(fig_forecast, use_container_width=True)
         else:
             st.info("Add at least 12 points for wind speed forecasting.")
@@ -258,7 +223,7 @@ with tab3:
             y=historical_data['Latitude'],
             z=historical_data['Altitude'],
             mode='markers+lines',
-            marker=dict(size=5, color=historical_data['WindSpeed'], colorscale='Blues', colorbar=dict(title='WindSpeed'))
+            marker=dict(size=5, color=historical_data['WindSpeed'], colorscale='Viridis', colorbar=dict(title='WindSpeed'))
         )])
         fig_3d.update_layout(
             scene = dict(
