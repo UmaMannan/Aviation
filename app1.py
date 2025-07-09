@@ -16,7 +16,7 @@ from prophet import Prophet
 from fpdf import FPDF
 import base64
 
-# ----------- UMA THEME & SIDEBAR BRANDING -----------
+# ----------- UMA THEME -----------
 st.set_page_config(
     page_title="UMA Aviation Club Dashboard",
     page_icon="✈️",
@@ -56,16 +56,15 @@ st.markdown("""
             color: #FFD700 !important;
             font-weight: bold;
         }
-        .sidebar .element-container:first-child {
-            margin-top: 30px;
-            margin-bottom: 10px;
-        }
     </style>
 """, unsafe_allow_html=True)
 
+# --- LOGO AND CLUB NAME ON MAIN PAGE ---
+st.image("logo.png", width=300)
+st.markdown("<h1 style='text-align:center; color:#5e7fa5;'>UMA Aviation Club Dashboard</h1>", unsafe_allow_html=True)
+
+# ------------ SIDEBAR (No logo) -------------
 with st.sidebar:
-    st.image("logo.png", width=220)
-    st.markdown("<h2 style='text-align:center; color:#5e7fa5;'>UMA Aviation Club Dashboard</h2>", unsafe_allow_html=True)
     st.info(
         "🛩️ Enter your aircraft and weather data, analyze risk, "
         "forecast turbulence, and download safety reports."
@@ -317,6 +316,6 @@ with tab4:
     - Powered by OpenWeatherMap API
     """)
     st.markdown("---")
-    st.markdown("**Developer:** Your Name Here | **Contact:** you@example.com")
+    st.markdown("**Developer:** Uma Mannan | **Contact:** umamannan16@gmail.com")
 
 # --- End ---
