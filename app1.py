@@ -63,7 +63,7 @@ st.markdown("""
 st.image("logo.png", width=300)
 st.markdown("<h1 style='text-align:center; color:#5e7fa5;'>UMA Aviation Club Dashboard</h1>", unsafe_allow_html=True)
 
-# ------------ SIDEBAR (No logo) -------------
+# ------------ SIDEBAR (NO LOGO!) -------------
 with st.sidebar:
     st.info(
         "🛩️ Enter your aircraft and weather data, analyze risk, "
