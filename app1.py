@@ -16,7 +16,7 @@ from prophet import Prophet
 from fpdf import FPDF
 import base64
 
-# ----------- UMA THEME: Blue Steel, Transparent Charts -----------
+# ----------- THEME: Blue Steel, Everything Transparent -----------
 st.set_page_config(
     page_title="UMA Aviation Club Dashboard",
     page_icon="✈️",
@@ -41,12 +41,20 @@ st.markdown("""
             color: #fff !important;
             border-radius: 8px;
         }
-        /* Remove all white/box backgrounds from charts, maps, tables */
+        /* Remove all white/box backgrounds from charts, maps, tables, and containers */
         .stDataFrame, .stTable, .element-container, .st-cg, .st-ag, .st-emotion-cache-1h9usn3 {
             background-color: transparent !important;
             color: #205080 !important;
             border-radius: 10px !important;
             box-shadow: none !important;
+        }
+        .stComponent > div {
+            background: transparent !important;
+            box-shadow: none !important;
+            border-radius: 10px !important;
+        }
+        iframe {
+            background: transparent !important;
         }
         thead tr th {
             background: #e3e9f3 !important;
@@ -240,7 +248,7 @@ with tab1:
     m = folium.Map(location=[latitude, longitude], zoom_start=6, tiles="CartoDB dark_matter")
     HeatMap([[latitude, longitude, df["TurbulenceScore"].iloc[0]]]).add_to(m)
     folium.Marker([latitude, longitude], tooltip="Current Location").add_to(m)
-    st_folium(m, width=700)
+    st_folium(m, width=900, height=500)  # Increased height to fill block, avoid white below
 
     # Route Input & Visualization
     st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🌍</span> Route Visualization</h2>", unsafe_allow_html=True)
@@ -258,7 +266,7 @@ with tab1:
     AntPath(route_coords, color="blue").add_to(route_map)
     folium.Marker([origin_lat, origin_lon], tooltip="Origin", icon=folium.Icon(color='green')).add_to(route_map)
     folium.Marker([dest_lat, dest_lon], tooltip="Destination", icon=folium.Icon(color='red')).add_to(route_map)
-    st_folium(route_map, width=700)
+    st_folium(route_map, width=900, height=500)
 
     # --- Turbulence Prediction (ML Model) ---
     st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🔮</span> Turbulence Prediction</h2>", unsafe_allow_html=True)
