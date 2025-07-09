@@ -16,7 +16,7 @@ from prophet import Prophet
 from fpdf import FPDF
 import base64
 
-# ----------- UMA THEME -----------
+# ----------- UMA THEME: "Blue Steel" -----------
 st.set_page_config(
     page_title="UMA Aviation Club Dashboard",
     page_icon="✈️",
@@ -26,42 +26,45 @@ st.set_page_config(
 st.markdown("""
     <style>
         .reportview-container, .stApp {
-            background: #23272f !important;
-            color: #b8c6db !important;
+            background: linear-gradient(135deg, #d3e2f8 0%, #43688b 100%) !important;
+            color: #233145 !important;
         }
         .sidebar .sidebar-content {
-            background: #16191d !important;
+            background: #e3e9f3 !important;
         }
         h1, h2, h3, h4, h5, .stTabs [data-baseweb="tab"] {
-            color: #5e7fa5 !important;
+            color: #205080 !important;
+            font-weight: bold;
         }
         .stButton > button, .stDownloadButton > button {
-            background-color: #2e4159 !important;
-            color: #b8c6db !important;
+            background-color: #205080 !important;
+            color: #fff !important;
+            border-radius: 8px;
         }
         .stDataFrame, .stTable {
-            background-color: #23272f !important;
-            color: #b8c6db !important;
+            background-color: #f4f8fd !important;
+            color: #233145 !important;
         }
-        .stAlert {
-            background-color: #19212b !important;
-            color: #c4d7ea !important;
-        }
-        .st-info {
-            background-color: #223449 !important;
-            color: #b8c6db !important;
+        .stAlert, .st-info {
+            background-color: #d6e7fa !important;
+            color: #205080 !important;
         }
         .stTabs [data-baseweb="tab"][aria-selected="true"] {
-            background: #26394d !important;
-            color: #FFD700 !important;
+            background: #e9eef8 !important;
+            color: #f5b942 !important; /* gold for active tab */
             font-weight: bold;
+            border-bottom: 3px solid #f5b942;
+        }
+        /* Optional: nice box shadow for widgets */
+        .stButton > button, .stDownloadButton > button, .stDataFrame, .stTable {
+            box-shadow: 0 2px 8px rgba(32,50,80,0.1);
         }
     </style>
 """, unsafe_allow_html=True)
 
 # --- LOGO AND CLUB NAME ON MAIN PAGE ---
 st.image("logo.png", width=300)
-st.markdown("<h1 style='text-align:center; color:#5e7fa5;'>UMA Aviation Club Dashboard</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center; color:#205080; font-size:3rem; font-weight:900; letter-spacing:2px;'>UMA Aviation Club Dashboard</h1>", unsafe_allow_html=True)
 
 # ------------ SIDEBAR (NO LOGO!) -------------
 with st.sidebar:
@@ -70,7 +73,13 @@ with st.sidebar:
         "forecast turbulence, and download safety reports."
     )
     st.markdown("---")
-    st.markdown("**Instructions:**\n- Enter flight parameters\n- Analyze & visualize results\n- Forecast turbulence\n- Download/export session")
+    st.markdown("""
+    **Instructions:**
+    - Enter flight parameters
+    - Analyze & visualize results
+    - Forecast turbulence
+    - Download/export session
+    """)
     st.markdown("---")
     user_wind_alert = st.slider("Wind Speed Alert Threshold (m/s)", 0.0, 50.0, 30.0, help="Set a custom alert for high wind speed.")
     st.markdown("---")
@@ -145,7 +154,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["Flight Analysis", "Trends & Forecast", "3D Fl
 
 # --- Tab 1: Flight Analysis ---
 with tab1:
-    st.markdown("## 🛩️ Cockpit Panel")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.7rem;'>✈️</span> Cockpit Panel</h2>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     with col1:
         fig_cog = go.Figure(go.Indicator(
@@ -176,23 +185,23 @@ with tab1:
     if st.button("🔊 Speak Turbulence Level"):
         speak_turbulence_level(df["TurbulenceClass"].iloc[0])
 
-    st.markdown("## 📋 Flight Snapshot")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🗂️</span> Flight Snapshot</h2>", unsafe_allow_html=True)
     st.dataframe(df, use_container_width=True)
 
-    st.markdown("## 📋 Risk Summary")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>📝</span> Risk Summary</h2>", unsafe_allow_html=True)
     turb = df["TurbulenceClass"].iloc[0]
     color = {"Low": "🟢", "Medium": "🟡", "High": "🔴"}[turb]
     note = {"Low": "Safe to proceed.", "Medium": "Proceed with caution.", "High": "Delay or reroute suggested."}[turb]
     st.info(f"**Turbulence Level:** {turb} {color} | **Recommendation:** {note}")
 
-    st.markdown("## 🗺️ Location Map")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🗺️</span> Location Map</h2>", unsafe_allow_html=True)
     m = folium.Map(location=[latitude, longitude], zoom_start=6, tiles="CartoDB dark_matter")
     HeatMap([[latitude, longitude, df["TurbulenceScore"].iloc[0]]]).add_to(m)
     folium.Marker([latitude, longitude], tooltip="Current Location").add_to(m)
     st_folium(m, width=700)
 
     # Route Input & Visualization
-    st.markdown("## 🌍 Route Visualization")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🌍</span> Route Visualization</h2>", unsafe_allow_html=True)
     with st.expander("Show Route Input"):
         origin_lat = st.number_input("Origin Latitude", value=37.77)
         origin_lon = st.number_input("Origin Longitude", value=-122.42)
@@ -210,7 +219,7 @@ with tab1:
     st_folium(route_map, width=700)
 
     # --- Turbulence Prediction (ML Model) ---
-    st.markdown("## 🔮 Turbulence Prediction")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🔮</span> Turbulence Prediction</h2>", unsafe_allow_html=True)
     try:
         model = joblib.load("model_turbulence.pkl")
         features = df[["Weight", "Arm", "WindSpeed", "Altitude"]].values
@@ -221,12 +230,12 @@ with tab1:
 
 # --- Tab 2: Trends & Forecast ---
 with tab2:
-    st.markdown("## 📈 Historical Trends")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'>📈 Historical Trends</h2>", unsafe_allow_html=True)
     fig_hist = px.line(historical_data, x="Time", y=["COG", "Altitude", "WindSpeed"], markers=True,
-                       color_discrete_map={"COG": "#5e7fa5", "Altitude": "#b8c6db", "WindSpeed": "#2e4159"})
+                       color_discrete_map={"COG": "#205080", "Altitude": "#5e7fa5", "WindSpeed": "#f5b942"})
     st.plotly_chart(fig_hist, use_container_width=True)
 
-    st.markdown("## 🚨 Anomaly Detection")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'>🚨 Anomaly Detection</h2>", unsafe_allow_html=True)
     if len(historical_data) >= 10:
         clf = IsolationForest(contamination=0.1, random_state=42)
         feat_cols = ["WindSpeed", "COG", "Altitude"]
@@ -240,7 +249,7 @@ with tab2:
     else:
         st.info("Add more historical points to enable anomaly detection (minimum 10).")
 
-    st.markdown("## 📉 Wind Speed Trend Forecasting")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'>📉 Wind Speed Trend Forecasting</h2>", unsafe_allow_html=True)
     try:
         if len(historical_data) > 12:
             forecast_data = historical_data[["Time", "WindSpeed"]].rename(columns={"Time": "ds", "WindSpeed": "y"})
@@ -248,9 +257,9 @@ with tab2:
             model.fit(forecast_data)
             future = model.make_future_dataframe(periods=24, freq='H')
             forecast = model.predict(future)
-            fig_forecast = px.line(forecast, x='ds', y='yhat', title="Wind Speed Forecast", color_discrete_sequence=["#5e7fa5"])
-            fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Conf.', line=dict(color="#b8c6db"))
-            fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Conf.', line=dict(color="#2e4159"))
+            fig_forecast = px.line(forecast, x='ds', y='yhat', title="Wind Speed Forecast", color_discrete_sequence=["#205080"])
+            fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Conf.', line=dict(color="#f5b942"))
+            fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Conf.', line=dict(color="#5e7fa5"))
             st.plotly_chart(fig_forecast, use_container_width=True)
         else:
             st.info("Add at least 12 points for wind speed forecasting.")
@@ -259,7 +268,7 @@ with tab2:
 
 # --- Tab 3: 3D Flight Path ---
 with tab3:
-    st.markdown("## 🛰️ 3D Flight Path Visualization")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'>🛰️ 3D Flight Path Visualization</h2>", unsafe_allow_html=True)
     try:
         fig_3d = go.Figure(data=[go.Scatter3d(
             x=historical_data['Longitude'],
@@ -282,7 +291,7 @@ with tab3:
 
 # --- Tab 4: Settings & Export ---
 with tab4:
-    st.markdown("## ⚙️ Settings & Data Export")
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'>⚙️ Settings & Data Export</h2>", unsafe_allow_html=True)
     # Save session
     csv = historical_data.to_csv(index=False).encode()
     st.download_button("Download Session CSV", csv, "session.csv")
