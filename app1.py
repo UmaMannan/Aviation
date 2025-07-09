@@ -16,7 +16,7 @@ from prophet import Prophet
 from fpdf import FPDF
 import base64
 
-# ----------- UMA THEME: "Blue Steel" -----------
+# ----------- UMA THEME: Blue Steel, Transparent Charts -----------
 st.set_page_config(
     page_title="UMA Aviation Club Dashboard",
     page_icon="✈️",
@@ -41,9 +41,19 @@ st.markdown("""
             color: #fff !important;
             border-radius: 8px;
         }
-        .stDataFrame, .stTable {
-            background-color: #f4f8fd !important;
-            color: #233145 !important;
+        /* Remove all white/box backgrounds from charts, maps, tables */
+        .stDataFrame, .stTable, .element-container, .st-cg, .st-ag, .st-emotion-cache-1h9usn3 {
+            background-color: transparent !important;
+            color: #205080 !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
+        }
+        thead tr th {
+            background: #e3e9f3 !important;
+            color: #205080 !important;
+        }
+        tbody tr {
+            background: rgba(67,104,139,0.09) !important;
         }
         .stAlert, .st-info {
             background-color: #d6e7fa !important;
@@ -51,13 +61,9 @@ st.markdown("""
         }
         .stTabs [data-baseweb="tab"][aria-selected="true"] {
             background: #e9eef8 !important;
-            color: #f5b942 !important; /* gold for active tab */
+            color: #f5b942 !important;
             font-weight: bold;
             border-bottom: 3px solid #f5b942;
-        }
-        /* Optional: nice box shadow for widgets */
-        .stButton > button, .stDownloadButton > button, .stDataFrame, .stTable {
-            box-shadow: 0 2px 8px rgba(32,50,80,0.1);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -159,20 +165,56 @@ with tab1:
     with col1:
         fig_cog = go.Figure(go.Indicator(
             mode="gauge+number", value=df["COG"].iloc[0],
-            title={'text': "COG (in)"}, gauge={'axis': {'range': [10, 60]}}
+            title={'text': "COG (in)"},
+            gauge={
+                'axis': {'range': [10, 60]},
+                'bar': {'color': '#205080'},
+                'bgcolor': 'rgba(67,104,139,0.10)',
+                'borderwidth': 2,
+                'bordercolor': "#205080",
+            }
         ))
+        fig_cog.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#205080"
+        )
         st.plotly_chart(fig_cog, use_container_width=True)
     with col2:
         fig_alt = go.Figure(go.Indicator(
             mode="gauge+number", value=df["Altitude"].iloc[0],
-            title={'text': "Altitude (ft)"}, gauge={'axis': {'range': [0, 20000]}}
+            title={'text': "Altitude (ft)"},
+            gauge={
+                'axis': {'range': [0, 20000]},
+                'bar': {'color': '#205080'},
+                'bgcolor': 'rgba(67,104,139,0.10)',
+                'borderwidth': 2,
+                'bordercolor': "#205080",
+            }
         ))
+        fig_alt.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#205080"
+        )
         st.plotly_chart(fig_alt, use_container_width=True)
     with col3:
         fig_wind = go.Figure(go.Indicator(
             mode="gauge+number", value=df["WindSpeed"].iloc[0],
-            title={'text': "Wind Speed (m/s)"}, gauge={'axis': {'range': [0, 50]}}
+            title={'text': "Wind Speed (m/s)"},
+            gauge={
+                'axis': {'range': [0, 50]},
+                'bar': {'color': '#205080'},
+                'bgcolor': 'rgba(67,104,139,0.10)',
+                'borderwidth': 2,
+                'bordercolor': "#205080",
+            }
         ))
+        fig_wind.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#205080"
+        )
         st.plotly_chart(fig_wind, use_container_width=True)
 
     # Voice Output
@@ -233,6 +275,11 @@ with tab2:
     st.markdown("<h2 style='color:#205080;font-size:2rem;'>📈 Historical Trends</h2>", unsafe_allow_html=True)
     fig_hist = px.line(historical_data, x="Time", y=["COG", "Altitude", "WindSpeed"], markers=True,
                        color_discrete_map={"COG": "#205080", "Altitude": "#5e7fa5", "WindSpeed": "#f5b942"})
+    fig_hist.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#205080"
+    )
     st.plotly_chart(fig_hist, use_container_width=True)
 
     st.markdown("<h2 style='color:#205080;font-size:2rem;'>🚨 Anomaly Detection</h2>", unsafe_allow_html=True)
@@ -260,6 +307,11 @@ with tab2:
             fig_forecast = px.line(forecast, x='ds', y='yhat', title="Wind Speed Forecast", color_discrete_sequence=["#205080"])
             fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_upper'], mode='lines', name='Upper Conf.', line=dict(color="#f5b942"))
             fig_forecast.add_scatter(x=forecast['ds'], y=forecast['yhat_lower'], mode='lines', name='Lower Conf.', line=dict(color="#5e7fa5"))
+            fig_forecast.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font_color="#205080"
+            )
             st.plotly_chart(fig_forecast, use_container_width=True)
         else:
             st.info("Add at least 12 points for wind speed forecasting.")
@@ -283,7 +335,10 @@ with tab3:
                 yaxis_title='Latitude',
                 zaxis_title='Altitude (ft)'
             ),
-            title="3D Flight Path: Altitude and Turbulence"
+            title="3D Flight Path: Altitude and Turbulence",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#205080"
         )
         st.plotly_chart(fig_3d, use_container_width=True)
     except Exception as e:
