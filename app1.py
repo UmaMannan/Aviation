@@ -41,7 +41,6 @@ st.markdown("""
             color: #fff !important;
             border-radius: 8px;
         }
-        /* Remove all white/box backgrounds from charts, maps, tables, and containers */
         .stDataFrame, .stTable, .element-container, .st-cg, .st-ag, .st-emotion-cache-1h9usn3 {
             background-color: transparent !important;
             color: #205080 !important;
@@ -145,6 +144,24 @@ df["TurbulenceClass"] = df["TurbulenceScore"].apply(
     lambda x: "Low" if x < 0.3 else "Medium" if x < 0.7 else "High"
 )
 
+# --- Delay Risk Calculation (NEW FEATURE) ---
+def calculate_delay_risk(wind_speed, altitude):
+    """
+    Simulate delay/disruption risk as a function of wind speed and altitude.
+    In real world, use historical delay data + ML.
+    """
+    risk_score = 0.5 * (wind_speed / 50.0) + 0.5 * (1 - altitude / 20000)
+    risk_score = max(0.0, min(1.0, risk_score))
+    if risk_score < 0.3:
+        level = "Low"
+    elif risk_score < 0.7:
+        level = "Medium"
+    else:
+        level = "High"
+    return risk_score, level
+
+df["DelayRiskScore"], df["DelayRiskLevel"] = zip(*df.apply(lambda row: calculate_delay_risk(row["WindSpeed"], row["Altitude"]), axis=1))
+
 # --- Session data management ---
 if "historical_data" not in st.session_state or uploaded:
     if uploaded:
@@ -169,7 +186,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["Flight Analysis", "Trends & Forecast", "3D Fl
 # --- Tab 1: Flight Analysis ---
 with tab1:
     st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.7rem;'>✈️</span> Cockpit Panel</h2>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         fig_cog = go.Figure(go.Indicator(
             mode="gauge+number", value=df["COG"].iloc[0],
@@ -224,6 +241,24 @@ with tab1:
             font_color="#205080"
         )
         st.plotly_chart(fig_wind, use_container_width=True)
+    with col4:
+        fig_delay = go.Figure(go.Indicator(
+            mode="gauge+number", value=df["DelayRiskScore"].iloc[0],
+            title={'text': "Delay Risk"},
+            gauge={
+                'axis': {'range': [0, 1], 'tickvals': [0, 0.5, 1], 'ticktext': ['Low', 'Medium', 'High']},
+                'bar': {'color': '#f5b942' if df["DelayRiskLevel"].iloc[0]=="Medium" else "#d62728" if df["DelayRiskLevel"].iloc[0]=="High" else "#2ca02c"},
+                'bgcolor': 'rgba(67,104,139,0.10)',
+                'borderwidth': 2,
+                'bordercolor': "#205080",
+            }
+        ))
+        fig_delay.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font_color="#205080"
+        )
+        st.plotly_chart(fig_delay, use_container_width=True)
 
     # Voice Output
     def speak_turbulence_level(level):
@@ -236,7 +271,7 @@ with tab1:
         speak_turbulence_level(df["TurbulenceClass"].iloc[0])
 
     st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🗂️</span> Flight Snapshot</h2>", unsafe_allow_html=True)
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df[["Time","Latitude","Longitude","Weight","Arm","WindSpeed","Altitude","COG","TurbulenceScore","TurbulenceClass","DelayRiskScore","DelayRiskLevel"]], use_container_width=True)
 
     st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>📝</span> Risk Summary</h2>", unsafe_allow_html=True)
     turb = df["TurbulenceClass"].iloc[0]
@@ -244,11 +279,17 @@ with tab1:
     note = {"Low": "Safe to proceed.", "Medium": "Proceed with caution.", "High": "Delay or reroute suggested."}[turb]
     st.info(f"**Turbulence Level:** {turb} {color} | **Recommendation:** {note}")
 
+    # Delay Risk (NEW)
+    delay_level = df["DelayRiskLevel"].iloc[0]
+    delay_note = {"Low": "Low delay risk.", "Medium": "Some risk of delay. Check for weather or ATC updates.", "High": "High risk of flight delay or disruption."}[delay_level]
+    delay_color = {"Low": "🟢", "Medium": "🟡", "High": "🔴"}[delay_level]
+    st.info(f"**Delay Risk:** {delay_level} {delay_color} | **Recommendation:** {delay_note}")
+
     st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🗺️</span> Location Map</h2>", unsafe_allow_html=True)
     m = folium.Map(location=[latitude, longitude], zoom_start=6, tiles="CartoDB dark_matter")
     HeatMap([[latitude, longitude, df["TurbulenceScore"].iloc[0]]]).add_to(m)
     folium.Marker([latitude, longitude], tooltip="Current Location").add_to(m)
-    st_folium(m, width=900, height=500)  # Increased height to fill block, avoid white below
+    st_folium(m, width=900, height=500)
 
     # Route Input & Visualization
     st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:1.3rem;'>🌍</span> Route Visualization</h2>", unsafe_allow_html=True)
@@ -368,7 +409,7 @@ with tab4:
         pdf.ln(10)
         pdf.set_font("Arial", size=10)
         for i, row in data.tail(10).iterrows():
-            text = f"Time: {row['Time']} | Lat: {row['Latitude']} | Lon: {row['Longitude']} | Wind: {row['WindSpeed']} | Alt: {row['Altitude']} | COG: {row['COG']:.2f} | Turb: {row['TurbulenceClass']}"
+            text = f"Time: {row['Time']} | Lat: {row['Latitude']} | Lon: {row['Longitude']} | Wind: {row['WindSpeed']} | Alt: {row['Altitude']} | COG: {row['COG']:.2f} | Turb: {row['TurbulenceClass']} | DelayRisk: {row['DelayRiskLevel']}"
             pdf.multi_cell(0, 8, txt=text)
         with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
             pdf.output(tmp_pdf.name)
