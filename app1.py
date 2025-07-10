@@ -114,6 +114,10 @@ wind_speed = st.sidebar.slider("Wind Speed (m/s)", 0.0, 50.0, 15.0)
 altitude = st.sidebar.slider("Altitude (feet)", 0, 20000, 10000)
 use_live_wind = st.sidebar.checkbox("Use Live Wind Speed")
 
+# ----------- LIVE AVIATION DATA INPUTS ----------
+st.sidebar.header("🛩️ Airport/Route Data (Realtime)")
+icao_code = st.sidebar.text_input("Airport ICAO Code", value="KSFO", max_chars=4, help="Enter ICAO (e.g., KSFO, EGLL)")
+
 # --- Fetch live wind speed if selected ---
 @st.cache_data(ttl=600)
 def fetch_live_weather(lat, lon, api_key):
@@ -146,10 +150,6 @@ df["TurbulenceClass"] = df["TurbulenceScore"].apply(
 
 # --- Delay Risk Calculation (NEW FEATURE) ---
 def calculate_delay_risk(wind_speed, altitude):
-    """
-    Simulate delay/disruption risk as a function of wind speed and altitude.
-    In real world, use historical delay data + ML.
-    """
     risk_score = 0.5 * (wind_speed / 50.0) + 0.5 * (1 - altitude / 20000)
     risk_score = max(0.0, min(1.0, risk_score))
     if risk_score < 0.3:
@@ -181,7 +181,9 @@ if df["WindSpeed"].iloc[0] > user_wind_alert:
     st.error(f"🚨 ALERT: Wind speed ({df['WindSpeed'].iloc[0]:.1f} m/s) exceeds your safe threshold!")
 
 # --- Main Tabs ---
-tab1, tab2, tab3, tab4 = st.tabs(["Flight Analysis", "Trends & Forecast", "3D Flight Path", "Settings & Export"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "Flight Analysis", "Trends & Forecast", "3D Flight Path", "Settings & Export", "Live Aviation Data"
+])
 
 # --- Tab 1: Flight Analysis ---
 with tab1:
@@ -430,5 +432,61 @@ with tab4:
     """)
     st.markdown("---")
     st.markdown("**Developer:** Uma Mannan | **Contact:** umamannan16@gmail.com")
+
+# --- Tab 5: Live Aviation Data ---
+def get_metar_taf(icao):
+    headers = {"Accept": "application/json"}
+    metar_url = f"https://avwx.rest/api/metar/{icao}?options=info,translate"
+    taf_url = f"https://avwx.rest/api/taf/{icao}?options=info,translate"
+    try:
+        metar = requests.get(metar_url, headers=headers, timeout=5).json()
+        taf = requests.get(taf_url, headers=headers, timeout=5).json()
+        return metar, taf
+    except Exception as e:
+        return None, None
+
+def get_notams(icao):
+    url = f"https://notaminfo.com/api/airport/{icao}"
+    try:
+        res = requests.get(url, timeout=10)
+        if res.status_code == 200:
+            data = res.json()
+            return data.get("notams", [])[:5]
+        else:
+            return []
+    except Exception as e:
+        return []
+
+with tab5:
+    st.markdown("<h2 style='color:#205080;font-size:2rem;'>🛰️ Live Aviation Data</h2>", unsafe_allow_html=True)
+    st.info(f"Showing METAR/TAF and NOTAMs for airport: **{icao_code.upper()}**")
+    metar, taf = get_metar_taf(icao_code)
+    notams = get_notams(icao_code)
+
+    # METAR
+    if metar and "raw" in metar:
+        st.subheader("METAR (Current Weather)")
+        st.write(metar["raw"])
+        if "translate" in metar and metar["translate"]:
+            st.success(metar["translate"]["summary"])
+    else:
+        st.warning("No METAR data found for this ICAO code.")
+
+    # TAF
+    if taf and "raw" in taf:
+        st.subheader("TAF (Forecast)")
+        st.write(taf["raw"])
+        if "translate" in taf and taf["translate"]:
+            st.info(taf["translate"]["summary"])
+    else:
+        st.warning("No TAF data found for this ICAO code.")
+
+    # NOTAMs
+    st.subheader("Recent NOTAMs")
+    if notams:
+        for i, n in enumerate(notams, 1):
+            st.write(f"{i}. {n.get('text', '')}")
+    else:
+        st.info("No NOTAMs found or this is not a US airport.")
 
 # --- End ---
