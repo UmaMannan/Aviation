@@ -15,6 +15,7 @@ from sklearn.ensemble import IsolationForest
 from prophet import Prophet
 from fpdf import FPDF
 import base64
+import openai
 
 # ----------- THEME: Blue Steel, Everything Transparent -----------
 st.set_page_config(
@@ -99,6 +100,44 @@ with st.sidebar:
     st.markdown("#### Data Management")
     uploaded = st.file_uploader("Upload Previous Session", type="csv", help="Restore a saved flight session.")
 
+    st.markdown("---")
+    st.header("🤖 AI Copilot (Beta)")
+
+    user_ai_q = st.text_area("Ask the AI Copilot anything about aviation, safety, weather, or flight planning...", key="aiq")
+
+    if st.button("Ask AI"):
+        with st.spinner("AI Copilot is thinking..."):
+            try:
+                openai.api_key = st.secrets["OPENAI"]["api_key"]
+            except Exception:
+                openai.api_key = "sk-...yourkeyhere..."
+            try:
+                # For best results, give the AI current session context:
+                system_prompt = (
+                    "You are an aviation safety assistant for pilots and dispatchers. "
+                    "Answer user questions about flight planning, aviation weather, NOTAMs, safety, regulations, and club operations in a concise, helpful way. "
+                    "If a question relates to the user's entered ICAO code or current weather, use that context."
+                )
+                # We'll pass dummy values for ICAO, wind, altitude as fallback (they update after user input)
+                _icao = st.session_state.get("icao_code", "KSFO") if "icao_code" in st.session_state else "KSFO"
+                _wind = st.session_state.get("wind_speed", 15.0) if "wind_speed" in st.session_state else 15.0
+                _alt = st.session_state.get("altitude", 10000) if "altitude" in st.session_state else 10000
+                user_context = f"ICAO code: {_icao}\nWind: {_wind} m/s\nAltitude: {_alt} ft"
+                messages = [
+                    {"role": "system", "content": system_prompt + "\n" + user_context},
+                    {"role": "user", "content": user_ai_q},
+                ]
+                resp = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=messages,
+                    max_tokens=400,
+                    temperature=0.3
+                )
+                ai_answer = resp.choices[0].message.content
+                st.success(ai_answer)
+            except Exception as e:
+                st.error(f"AI error: {e}")
+
 # ------------ API KEY -------------
 api_key = "e9e42833dd2e06259a55b7ea59429ab1"
 
@@ -117,6 +156,11 @@ use_live_wind = st.sidebar.checkbox("Use Live Wind Speed")
 # ----------- LIVE AVIATION DATA INPUTS ----------
 st.sidebar.header("🛩️ Airport/Route Data (Realtime)")
 icao_code = st.sidebar.text_input("Airport ICAO Code", value="KSFO", max_chars=4, help="Enter ICAO (e.g., KSFO, EGLL)")
+
+# Save context for AI Copilot (so it's always current)
+st.session_state["icao_code"] = icao_code
+st.session_state["wind_speed"] = wind_speed
+st.session_state["altitude"] = altitude
 
 # --- Fetch live wind speed if selected ---
 @st.cache_data(ttl=600)
