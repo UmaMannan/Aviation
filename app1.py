@@ -75,7 +75,7 @@ st.markdown("""
         }
         /* --- Bigger tabs --- */
         .stTabs [data-baseweb="tab"] {
-            font-size: 1.25rem !important;
+            font-size: 3rem !important;
             padding: 0.9rem 2.3rem !important;
             height: 3.2rem !important;
         }
