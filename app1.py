@@ -84,14 +84,14 @@ button[role="tab"] {
 }
 /* The LABEL INSIDE each tab */
 button[role="tab"] > div > span {
-    font-size: 2.1rem !important;    /* Try 2.4rem for even larger text */
+    font-size: 4rem !important;    /* Try 2.4rem for even larger text */
     font-weight: bold !important;
     color: #205080 !important;
     line-height: 2.2rem !important;
 }
 button[role="tab"][aria-selected="true"] > div > span {
     color: #f5b942 !important;
-    font-size: 5rem !important;
+    font-size: 2.3rem !important;
 }
 button[role="tab"]:hover > div > span {
     color: #f5b942 !important;
