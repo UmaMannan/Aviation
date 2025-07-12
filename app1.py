@@ -38,7 +38,7 @@ html, body, [class*="css"] {
 }
 h1, h2, h3, h4, h5 {
     color: #205080 !important;
-    font-size: 10rem !important;
+    font-size: 2rem !important;
     font-weight: bold;
 }
 .stButton > button, .stDownloadButton > button {
@@ -77,14 +77,14 @@ tbody tr {
 
 /* 2. ***** THE TABS: Make font-size bigger ***** */
 button[role="tab"] {
-    min-height: 60px !important;
+    min-height: 30px !important;
     padding: 1.2rem 2.6rem !important;
     border-radius: 18px 18px 0 0 !important;
     background: transparent !important;
 }
 /* The LABEL INSIDE each tab */
 button[role="tab"] > div > span {
-    font-size: 1 rem !important;    /* Try 2.4rem for even larger text */
+    font-size: 2.1rem !important;    /* Try 2.4rem for even larger text */
     font-weight: bold !important;
     color: #205080 !important;
     line-height: 2.2rem !important;
