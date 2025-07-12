@@ -24,83 +24,89 @@ st.set_page_config(
     layout="wide"
 )
 st.markdown("""
-    <style>
-        .reportview-container, .stApp {
-            background: linear-gradient(135deg, #d3e2f8 0%, #43688b 100%) !important;
-            color: #233145 !important;
-        }
-        .sidebar .sidebar-content {
-            background: #e3e9f3 !important;
-        }
-        html, body, [class*="css"] {
-            font-size: 1rem !important;
-        }
-        h1, h2, h3, h4, h5 {
-            color: #205080 !important;
-            font-size: 2rem !important;
-            font-weight: bold;
-        }
+<style>
+/* 1. General App Styling */
+.reportview-container, .stApp {
+    background: linear-gradient(135deg, #d3e2f8 0%, #43688b 100%) !important;
+    color: #233145 !important;
+}
+.sidebar .sidebar-content {
+    background: #e3e9f3 !important;
+}
+html, body, [class*="css"] {
+    font-size: 1rem !important;
+}
+h1, h2, h3, h4, h5 {
+    color: #205080 !important;
+    font-size: 2rem !important;
+    font-weight: bold;
+}
+.stButton > button, .stDownloadButton > button {
+    background-color: #205080 !important;
+    color: #fff !important;
+    border-radius: 8px;
+}
+.stDataFrame, .stTable, .element-container, .st-cg, .st-ag, .st-emotion-cache-1h9usn3 {
+    background-color: transparent !important;
+    color: #205080 !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    font-size: 1.12rem !important;
+}
+.stMarkdown p, .stMarkdown li, .stMarkdown span {
+    font-size: 1.2rem !important;
+}
+.stAlert, .st-info, .element-container {
+    font-size: 1.12rem !important;
+}
+.stComponent > div {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 10px !important;
+}
+iframe {
+    background: transparent !important;
+}
+thead tr th {
+    background: #e3e9f3 !important;
+    color: #205080 !important;
+}
+tbody tr {
+    background: rgba(67,104,139,0.09) !important;
+}
 
-        /* --- BIG TABS, works for Streamlit 1.23+ --- */
-        section [data-testid="stTabs"] button[role="tab"] {
-            font-size: 2.6rem !important;
-            padding: 1.4rem 2.8rem !important;
-            font-weight: bold !important;
-            color: #205080 !important;
-            border-radius: 18px 18px 0 0 !important;
-            background: transparent !important;
-            transition: background 0.2s;
-        }
-        section [data-testid="stTabs"] button[aria-selected="true"] {
-            color: #f5b942 !important;
-            border-bottom: 5px solid #f5b942 !important;
-            background: #e9eef8 !important;
-            font-size: 2.8rem !important;
-        }
-
-        /* Extra tab hover effect (optional, makes tabs feel interactive) */
-        section [data-testid="stTabs"] button[role="tab"]:hover {
-            background: #e3e9f3 !important;
-            color: #f5b942 !important;
-            cursor: pointer;
-        }
-
-        /* Other default style tweaks you already have... */
-        .stButton > button, .stDownloadButton > button {
-            background-color: #205080 !important;
-            color: #fff !important;
-            border-radius: 8px;
-        }
-        .stDataFrame, .stTable, .element-container, .st-cg, .st-ag, .st-emotion-cache-1h9usn3 {
-            background-color: transparent !important;
-            color: #205080 !important;
-            border-radius: 10px !important;
-            box-shadow: none !important;
-            font-size: 1.12rem !important;
-        }
-        .stMarkdown p, .stMarkdown li, .stMarkdown span {
-            font-size: 1.2rem !important;
-        }
-        .stAlert, .st-info, .element-container {
-            font-size: 1.12rem !important;
-        }
-        .stComponent > div {
-            background: transparent !important;
-            box-shadow: none !important;
-            border-radius: 10px !important;
-        }
-        iframe {
-            background: transparent !important;
-        }
-        thead tr th {
-            background: #e3e9f3 !important;
-            color: #205080 !important;
-        }
-        tbody tr {
-            background: rgba(67,104,139,0.09) !important;
-        }
-    </style>
+/* 2. ***** THE TABS: Make font-size bigger ***** */
+button[role="tab"] {
+    min-height: 60px !important;
+    padding: 1.2rem 2.6rem !important;
+    border-radius: 18px 18px 0 0 !important;
+    background: transparent !important;
+}
+/* The LABEL INSIDE each tab */
+button[role="tab"] > div > span {
+    font-size: 2.1rem !important;    /* Try 2.4rem for even larger text */
+    font-weight: bold !important;
+    color: #205080 !important;
+    line-height: 2.2rem !important;
+}
+button[role="tab"][aria-selected="true"] > div > span {
+    color: #f5b942 !important;
+    font-size: 2.3rem !important;
+}
+button[role="tab"]:hover > div > span {
+    color: #f5b942 !important;
+}
+button[role="tab"]:hover {
+    background: #e3e9f3 !important;
+    cursor: pointer;
+}
+button[role="tab"][aria-selected="true"] {
+    border-bottom: 5px solid #f5b942 !important;
+    background: #e9eef8 !important;
+}
+</style>
 """, unsafe_allow_html=True)
+
 
 
 
