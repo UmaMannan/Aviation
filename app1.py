@@ -33,6 +33,9 @@ st.markdown("""
         .sidebar .sidebar-content {
             background: #e3e9f3 !important;
         }
+        html, body, [class*="css"] {
+            font-size: 1.2rem !important;   /* Make all base font larger */
+        }
         h1, h2, h3, h4, h5, .stTabs [data-baseweb="tab"] {
             color: #205080 !important;
             font-weight: bold;
@@ -47,6 +50,13 @@ st.markdown("""
             color: #205080 !important;
             border-radius: 10px !important;
             box-shadow: none !important;
+            font-size: 1.12rem !important;
+        }
+        .stMarkdown p, .stMarkdown li, .stMarkdown span {
+            font-size: 1.2rem !important;
+        }
+        .stAlert, .st-info, .element-container {
+            font-size: 1.12rem !important;
         }
         .stComponent > div {
             background: transparent !important;
@@ -63,10 +73,6 @@ st.markdown("""
         tbody tr {
             background: rgba(67,104,139,0.09) !important;
         }
-        .stAlert, .st-info {
-            background-color: #d6e7fa !important;
-            color: #205080 !important;
-        }
         .stTabs [data-baseweb="tab"][aria-selected="true"] {
             background: #e9eef8 !important;
             color: #f5b942 !important;
@@ -75,7 +81,7 @@ st.markdown("""
         }
         /* --- Bigger tabs --- */
         .stTabs [data-baseweb="tab"] {
-            font-size: 3rem !important;
+            font-size: 1.25rem !important;
             padding: 0.9rem 2.3rem !important;
             height: 3.2rem !important;
         }
