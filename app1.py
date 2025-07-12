@@ -428,7 +428,7 @@ with tab2:
 
 # --- Tab 3: 3D Flight Path ---
 with tab3:
-    st.markdown("<h2 style='color:#205080;font-size:1rem;'>🛰️ 3D Flight Path Visualization</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#205080;font-size:4rem;'>🛰️ 3D Flight Path Visualization</h2>", unsafe_allow_html=True)
     try:
         fig_3d = go.Figure(data=[go.Scatter3d(
             x=historical_data['Longitude'],
