@@ -428,14 +428,14 @@ with tab2:
 
 # --- Tab 3: 3D Flight Path ---
 with tab3:
-    st.markdown("<h2 style='color:#205080;font-size:2rem;'>🛰️ 3D Flight Path Visualization</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#205080;font-size:1rem;'>🛰️ 3D Flight Path Visualization</h2>", unsafe_allow_html=True)
     try:
         fig_3d = go.Figure(data=[go.Scatter3d(
             x=historical_data['Longitude'],
             y=historical_data['Latitude'],
             z=historical_data['Altitude'],
             mode='markers+lines',
-            marker=dict(size=7, color=historical_data['WindSpeed'], colorscale='Blues', colorbar=dict(title='WindSpeed'))
+            marker=dict(size=5, color=historical_data['WindSpeed'], colorscale='Blues', colorbar=dict(title='WindSpeed'))
         )])
         fig_3d.update_layout(
             scene = dict(
