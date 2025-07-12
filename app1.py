@@ -34,7 +34,7 @@ st.markdown("""
             background: #e3e9f3 !important;
         }
         html, body, [class*="css"] {
-            font-size: 1.2rem !important;   /* Make all base font larger */
+            font-size: 1.4rem !important;   /* Make all base font larger */
         }
         h1, h2, h3, h4, h5, .stTabs [data-baseweb="tab"] {
             color: #205080 !important;
