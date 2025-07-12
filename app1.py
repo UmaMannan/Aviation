@@ -239,7 +239,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 # --- Tab 1: Flight Analysis ---
 with tab1:
-    st.markdown("<h2 style='color:#205080;font-size:2rem;'><span style='font-size:2rem;'>✈️</span> Cockpit Panel</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#205080;font-size:4rem;'><span style='font-size:4rem;'>✈️</span> Cockpit Panel</h2>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         fig_cog = go.Figure(go.Indicator(
