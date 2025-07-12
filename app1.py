@@ -79,12 +79,7 @@ st.markdown("""
             font-weight: bold;
             border-bottom: 3px solid #f5b942;
         }
-        /* --- Bigger tabs --- */
-        .stTabs [data-baseweb="tab"] {
-            font-size: 3rem !important;
-            padding: 0.1rem 1rem !important;
-            height: 5rem !important;
-        }
+     
     </style>
 """, unsafe_allow_html=True)
 
