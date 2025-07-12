@@ -23,7 +23,6 @@ st.set_page_config(
     page_icon="✈️",
     layout="wide"
 )
-
 st.markdown("""
     <style>
         .reportview-container, .stApp {
@@ -34,13 +33,39 @@ st.markdown("""
             background: #e3e9f3 !important;
         }
         html, body, [class*="css"] {
-            font-size: 1rem !important;   /* Make all base font larger */
+            font-size: 1rem !important;
         }
-        h1, h2, h3, h4, h5, .stTabs [data-baseweb="tab"] {
+        h1, h2, h3, h4, h5 {
             color: #205080 !important;
-         
+            font-size: 2rem !important;
             font-weight: bold;
         }
+
+        /* --- BIG TABS, works for Streamlit 1.23+ --- */
+        section [data-testid="stTabs"] button[role="tab"] {
+            font-size: 2.6rem !important;
+            padding: 1.4rem 2.8rem !important;
+            font-weight: bold !important;
+            color: #205080 !important;
+            border-radius: 18px 18px 0 0 !important;
+            background: transparent !important;
+            transition: background 0.2s;
+        }
+        section [data-testid="stTabs"] button[aria-selected="true"] {
+            color: #f5b942 !important;
+            border-bottom: 5px solid #f5b942 !important;
+            background: #e9eef8 !important;
+            font-size: 2.8rem !important;
+        }
+
+        /* Extra tab hover effect (optional, makes tabs feel interactive) */
+        section [data-testid="stTabs"] button[role="tab"]:hover {
+            background: #e3e9f3 !important;
+            color: #f5b942 !important;
+            cursor: pointer;
+        }
+
+        /* Other default style tweaks you already have... */
         .stButton > button, .stDownloadButton > button {
             background-color: #205080 !important;
             color: #fff !important;
@@ -74,15 +99,10 @@ st.markdown("""
         tbody tr {
             background: rgba(67,104,139,0.09) !important;
         }
-        .stTabs [data-baseweb="tab"][aria-selected="true"] {
-            background: #e9eef8 !important;
-            color: #f5b942 !important;
-            font-weight: bold;
-            border-bottom: 3px solid #f5b942;
-        }
-     
     </style>
 """, unsafe_allow_html=True)
+
+
 
 
 # --- LOGO AND CLUB NAME ON MAIN PAGE ---
