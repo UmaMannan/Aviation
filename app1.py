@@ -84,7 +84,7 @@ button[role="tab"] {
 }
 /* The LABEL INSIDE each tab */
 button[role="tab"] > div > span {
-    font-size: 4rem !important;    /* Try 2.4rem for even larger text */
+    font-size: 1 rem !important;    /* Try 2.4rem for even larger text */
     font-weight: bold !important;
     color: #205080 !important;
     line-height: 2.2rem !important;
