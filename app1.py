@@ -73,8 +73,15 @@ st.markdown("""
             font-weight: bold;
             border-bottom: 3px solid #f5b942;
         }
+        /* --- Bigger tabs --- */
+        .stTabs [data-baseweb="tab"] {
+            font-size: 1.25rem !important;
+            padding: 0.9rem 2.3rem !important;
+            height: 3.2rem !important;
+        }
     </style>
 """, unsafe_allow_html=True)
+
 
 # --- LOGO AND CLUB NAME ON MAIN PAGE ---
 st.image("logo.png", width=150)
