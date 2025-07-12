@@ -38,7 +38,7 @@ html, body, [class*="css"] {
 }
 h1, h2, h3, h4, h5 {
     color: #205080 !important;
-    font-size: 2rem !important;
+    font-size: 10rem !important;
     font-weight: bold;
 }
 .stButton > button, .stDownloadButton > button {
