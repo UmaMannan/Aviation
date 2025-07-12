@@ -435,7 +435,7 @@ with tab3:
             y=historical_data['Latitude'],
             z=historical_data['Altitude'],
             mode='markers+lines',
-            marker=dict(size=5, color=historical_data['WindSpeed'], colorscale='Blues', colorbar=dict(title='WindSpeed'))
+            marker=dict(size=7, color=historical_data['WindSpeed'], colorscale='Blues', colorbar=dict(title='WindSpeed'))
         )])
         fig_3d.update_layout(
             scene = dict(
