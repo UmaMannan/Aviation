@@ -91,7 +91,7 @@ button[role="tab"] > div > span {
 }
 button[role="tab"][aria-selected="true"] > div > span {
     color: #f5b942 !important;
-    font-size: 2.3rem !important;
+    font-size: 5rem !important;
 }
 button[role="tab"]:hover > div > span {
     color: #f5b942 !important;
