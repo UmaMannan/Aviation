@@ -38,6 +38,7 @@ st.markdown("""
         }
         h1, h2, h3, h4, h5, .stTabs [data-baseweb="tab"] {
             color: #205080 !important;
+            font-size: 2rem !important;
             font-weight: bold;
         }
         .stButton > button, .stDownloadButton > button {
