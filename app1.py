@@ -77,7 +77,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- LOGO AND CLUB NAME ON MAIN PAGE ---
-st.image("logo.png", width=300)
+st.image("logo.png", width=100
+)
 st.markdown("<h1 style='text-align:center; color:#205080; font-size:3rem; font-weight:900; letter-spacing:2px;'>UMA Aviation Club Dashboard</h1>", unsafe_allow_html=True)
 
 # ------------ SIDEBAR (NO LOGO!) -------------
