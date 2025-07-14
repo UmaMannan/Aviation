@@ -1,4 +1,5 @@
 streamlit
+streamlit-authenticator
 openai
 pandas
 numpy
@@ -12,3 +13,5 @@ joblib
 gTTS
 prophet
 fpdf
+qrcode
+geopy
