@@ -19,7 +19,7 @@ import openai
 
 # ----------- THEME: Blue Steel, Everything Transparent -----------
 st.set_page_config(
-    page_title="UMA Aviation Club Dashboard",
+    page_title="Aviation Club Dashboard",
     page_icon="✈️",
     layout="wide"
 )
